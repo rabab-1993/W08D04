@@ -19,17 +19,26 @@ const newComment = (req, res) => {
       });
   };
 
+// get all post
 
+const allComment = (req, res) => {
+    commentModel
+      .find()
+      .then((result) => {
+        res.status(200).json(result);
+      })
+      .catch((err) => {
+        res.status(400).json(err);
+      });
+  };
 
 // update comment function
 const updateComment = async (req, res) => {
     const { comment, _id } = req.body;
-    await commentModel.findOneAndUpdate({ _id: _id }, { $set: { comment: comment } });
+    await commentModel.findOneAndUpdate({ _id: _id }, { $set: { comment: comment } })
   
-    commentModel
-      .findById({ _id })
-      .then((result) => {
-        res.status(200).json(result);
+      .then(() => {
+        res.status(200).json({ massege: "updated successfully" });
       })
       .catch((err) => {
         res.status(400).json(err);
@@ -50,5 +59,5 @@ const deleteComment = async (req, res) => {
    
   };
 
-//   return res.json({ massege: "deleted successfully" });
-module.exports = {newComment, updateComment, deleteComment}
+
+  module.exports = {newComment, updateComment, deleteComment, allComment}
