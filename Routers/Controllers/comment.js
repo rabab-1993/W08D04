@@ -37,20 +37,18 @@ const updateComment = async (req, res) => {
   };
 
 // delete comment function
-// const deleteComment = (req, res) => {
-//     const { isDeleted, _id } = req.body;
-//     postModel.findById({ _id }).then(async (result) => {
-//       if (result.isDeleted == true) {
-//         return res.json({ massege: "this post already have been deleted" });
-//       } else {
-//         await postModel.findOneAndUpdate(
-//           { _id: _id },
-//           { $set: { isDeleted: isDeleted } }
-//           );
-//           return res.json({ massege: "deleted successfully" });
-//       }
-//     });
-//   };
+const deleteComment = async (req, res) => {
+    const { _id } = req.body;
+    await commentModel.findByIdAndDelete(_id)
+    .then(() => {
+    res.status(200).json({ massege: "deleted successfully" });
+       
+      })
+      .catch((err) => {
+        res.status(400).json(err);
+      });
+   
+  };
 
-
+//   return res.json({ massege: "deleted successfully" });
 module.exports = {newComment, updateComment, deleteComment}
