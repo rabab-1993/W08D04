@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
-const post = new mongoose.Schema({
+const postSchema = new mongoose.Schema({
    img: {type: String},
    desc: {type: String, required: true},
    isDeleted: { type: Boolean, default: false },
-   date: {type: Date, default: new Date()},
+   date: {type: Date, default: Date.now},
    user: { type: mongoose.Schema.Types.ObjectId, ref: "User"},
 })
 
 
-module.exports = mongoose.model("Post", post);
+module.exports = mongoose.model("Post", postSchema);
