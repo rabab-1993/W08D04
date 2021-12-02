@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const jwt = require("jsonwebtoken");
-const SECRETKEY = process.env.SECRETKEY;
+const SECRETKEY = process.env.SECRET_KEY;
 
 //bcrypt > library to hash passwords.
 const bcrypt = require("bcrypt");
@@ -46,22 +46,22 @@ const register = async (req, res) => {
 // LogIn function
 
 const logIn = (req, res) => {
-  const { email, password } = req.body;
+  // res.json("hello")
+  const { userName,  email,password } = req.body;
+  // console.log(userName, email, password);
   userModel
-    .findOne(email)
+    .findOne({ $or: [{ email: email }, { userName: userName }] })
+    // .findOne({userName})
     .then(async (result) => {
+      console.log(result);
       if (result) {
-        if (email == result.email) {
-          const savePass = await bcrypt.compare(password, result.password);
-          if (savePass) {
-            const payload = {
-              role: result.role,
-            };
-            const token = await jwt.sign(payload, SECRETKEY);
-            res.status(200).json({ result, token });
-          } else {
-            res.status(400).json("invalid email or password");
-          }
+        const savePass = await bcrypt.compare(password, result.password);
+        if (savePass) {
+          const payload = {
+            role: result.role,
+          };
+          const token = jwt.sign(payload, SECRETKEY);
+          res.status(200).json({ result, token });
         } else {
           res.status(400).json("invalid email or password");
         }

@@ -1,9 +1,10 @@
 const express = require("express");
-const userRouter = express.Router();
-
 const {register, logIn, allUser, deleteUser} = require('../Controllers/user');
 const authentication = require('../midleware/auth')
 const authorization = require('../midleware/outh')
+
+const userRouter = express.Router();
+
 
 userRouter.post("/register", register);
 userRouter.post("/login", logIn);
