@@ -18,9 +18,6 @@ app.use("/user", userRouter);
 // role router
 const roleRouter = require('./Routers/Routes/role')
 app.use("/role", roleRouter);
-// task router
-const taskRouter = require('./Routers/Routes/task')
-app.use("/tasks", taskRouter);
 // post router
 const postRouter = require('./Routers/Routes/post')
 app.use("/post", postRouter);

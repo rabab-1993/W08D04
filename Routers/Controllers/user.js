@@ -1,5 +1,5 @@
 const userModel = require("../../db/model/user");
-const taskMdel = require("../../db/model/task");
+
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -46,12 +46,12 @@ const register = async (req, res) => {
 // LogIn function
 
 const logIn = (req, res) => {
-  // res.json("hello")
+  
   const { userName,  email,password } = req.body;
-  // console.log(userName, email, password);
+
   userModel
     .findOne({ $or: [{ email: email }, { userName: userName }] })
-    // .findOne({userName})
+  
     .then(async (result) => {
       console.log(result);
       if (result) {
@@ -59,6 +59,7 @@ const logIn = (req, res) => {
         if (savePass) {
           const payload = {
             role: result.role,
+            id: result._id
           };
           const token = jwt.sign(payload, SECRETKEY);
           res.status(200).json({ result, token });

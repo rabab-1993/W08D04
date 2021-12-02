@@ -1,13 +1,13 @@
 const express = require("express");
-const postRouter = express.Router();
-
+const authentication = require('../midleware/auth')
 const {newPost, allPost, updatePost, deletePost} = require('../Controllers/post');
 
+const postRouter = express.Router();
 
-postRouter.post('/', newPost)
-postRouter.get('/posts', allPost)
-postRouter.put('/update', updatePost)
-postRouter.delete('/', deletePost)
+postRouter.post('/',authentication, newPost)
+postRouter.get('/posts',authentication, allPost)
+postRouter.put('/update',authentication, updatePost)
+postRouter.delete('/',authentication, deletePost)
 
 
 

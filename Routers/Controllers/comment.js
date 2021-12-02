@@ -34,8 +34,10 @@ const allComment = (req, res) => {
 
 // update comment function
 const updateComment = async (req, res) => {
+  const idToken = req.token._id
     const { comment, _id } = req.body;
-    await commentModel.findOneAndUpdate({ _id: _id }, { $set: { comment: comment } })
+
+    await commentModel.findOneAndUpdate({ _id }, { $set: { comment: comment } })
   
       .then(() => {
         res.status(200).json({ massege: "updated successfully" });
