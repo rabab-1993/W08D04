@@ -1,4 +1,5 @@
 const userModel = require("../../db/model/user");
+const roleModel = require("../../db/model/role");
 
 const dotenv = require("dotenv");
 dotenv.config();
@@ -11,7 +12,7 @@ const bcrypt = require("bcrypt");
 const SALT = Number(process.env.SALT);
 
 // get all role function
-const allUser = (req, res) => {
+const allUser = async (req, res) => {
   userModel
     .find()
     .then((result) => {
@@ -46,20 +47,18 @@ const register = async (req, res) => {
 // LogIn function
 
 const logIn = (req, res) => {
-  
-  const { userName,  email,password } = req.body;
+  const { userName, email, password } = req.body;
 
   userModel
-    .findOne({ $or: [{ email: email }, { userName: userName }] })
-  
+    .findOne({ $or: [{ email }, { userName }] })
+
     .then(async (result) => {
-      console.log(result);
       if (result) {
         const savePass = await bcrypt.compare(password, result.password);
         if (savePass) {
           const payload = {
             role: result.role,
-            id: result._id
+            id: result._id,
           };
           const token = jwt.sign(payload, SECRETKEY);
           res.status(200).json({ result, token });
@@ -79,19 +78,17 @@ const logIn = (req, res) => {
 
 const deleteUser = async (req, res) => {
   const { _id } = req.body;
+
   userModel
     .findById({ _id })
     .then((result) => {
       console.log(result);
       if (result) {
-        userModel.deleteOne({ _id }, function (err) {
-          if (err) return handleError(err);
-        });
-        taskModel.deleteMany({ user: _id }, function (err) {
+        userModel.deleteOne({ _id }, (err) => {
           if (err) return handleError(err);
         });
 
-        res.status(200).json("done");
+        res.status(200).json({ massege: "user deleted successfully" });
       } else {
         return res.status(404).json("user not found");
       }

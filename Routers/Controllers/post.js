@@ -55,10 +55,7 @@ const deletePost = async (req, res) => {
       if (result.isDeleted == true) {
         return res.json({ massege: "this post already have been deleted" });
       } else {
-        await postModel.findOneAndUpdate(
-          { _id: _id },
-          { $set: { isDeleted: isDeleted } }
-        );
+        await postModel.findOneAndUpdate({ _id }, { $set: { isDeleted } });
         return res.json({ massege: "deleted successfully" });
       }
     });
