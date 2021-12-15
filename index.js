@@ -1,13 +1,23 @@
 const express = require("express");
-const dotenv = require("dotenv"); 
+const dotenv = require("dotenv") 
 dotenv.config();
-const mongoose = require("mongoose");
-const app = express()
+const morgan = require("morgan");
+const cors = require("cors");
+const passport = require("passport");
+const googleConfig = require("./passport")(passport)
+
+
+const app = express();
+
 // imported the db file
 require("./db/index")
 
-// app level middleware
-app.use(express.json())
+//  Middlewares
+app.use(express.json({limit: "30mb", extended: true}));
+app. use(express.urlencoded({limit: "30mb", extended: false}))
+app.use(cors());
+app.use(passport.initialize());
+app.use(morgan("dev"));
 
 
 // import all routers
@@ -20,13 +30,14 @@ const roleRouter = require('./Routers/Routes/role')
 app.use("/role", roleRouter);
 // post router
 const postRouter = require('./Routers/Routes/post')
-app.use("/post", postRouter);
+app.use("/posts", postRouter);
 // comment router
 const commentRouter = require('./Routers/Routes/comment')
 app.use("/comment", commentRouter);
 // comment router
 const likeRouter = require('./Routers/Routes/like')
 app.use("/like", likeRouter);
+
 
 
 

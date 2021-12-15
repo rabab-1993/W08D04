@@ -1,11 +1,13 @@
 const userModel = require("../../db/model/user");
 const roleModel = require("../../db/model/role");
-
 const dotenv = require("dotenv");
 dotenv.config();
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const jwt = require("jsonwebtoken");
 const SECRETKEY = process.env.SECRET_KEY;
+const activeKey = process.env.ACTIVE_KEY;
 
 //bcrypt > library to hash passwords.
 const bcrypt = require("bcrypt");
@@ -27,23 +29,123 @@ const allUser = async (req, res) => {
 const register = async (req, res) => {
   const { userName, email, password, role } = req.body;
   const savePass = await bcrypt.hash(password, SALT);
-  const creatUser = new userModel({
+  const data = {
     userName,
     email,
     password: savePass,
-    role,
-  });
+    role
+  };
+  const token = jwt.sign(data, activeKey, { expiresIn: "15m" });
 
-  creatUser
-    .save()
-    .then((result) => {
-      res.status(201).json(result);
+  // Sendgrid/mail
+  const msg = {
+    to: email,
+    from: "cutange1414@hotmail.com",
+    subject: "Email verification",
+    html: ` <button><a href=${process.env.ACTIVE_URL}/user/activated/${token}>verificate your email</a></button>`,
+  };
+  sgMail
+    .send(msg)
+    .then(() => {
+      console.log("Email sent");
+      res.status(201).json("Email has been sent, activate it");
     })
-    .catch((err) => {
-      res.status(400).json(err);
+    .catch((error) => {
+      console.error(error);
     });
 };
 
+const activated = (req, res) => {
+  console.log("activated route");
+  const { token } = req.params;
+  if (token) {
+    jwt.verify(token, activeKey, (err, decodedToken) => {
+      if (err) {
+        return res.status(400).json("Expired link");
+      }
+      const { userName, email, password, role } = decodedToken;
+      const creatUser = new userModel({
+        userName,
+        email,
+        password,
+        role
+      });
+      creatUser
+        .save()
+        .then((result) => {
+          res
+            .status(201)
+            .send(
+              `<h1>Email has been activated</h1> <button><a href=${process.env.LOG_PAGE}>Log In</a></button>`
+            );
+        })
+        .catch((err) => {
+          res.status(400).json(err);
+        });
+    });
+  } else {
+    return res.status(400).json("wrong activated");
+  }
+};
+
+const forgetPass =  (req, res) => {
+  const { email } = req.body;
+
+   userModel.findOne({ email }).then( ( user) => {
+    
+    if (!user) {
+      return res.status(400).json("user with this email dosn't exists");
+    }
+    const token = jwt.sign({ _id: user._id }, activeKey, { expiresIn: "15m" });
+    // Sendgrid/mail
+    const msg = {
+      to: email,
+      from: "cutange1414@hotmail.com",
+      subject: "password rest",
+      html: ` <button><a href=${process.env.LOG_PAGE}reset-pass/${token}>reset your password</a></button>`,
+    };
+    sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+        res.status(201).json("Email has been sent,reset it");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    userModel
+      .updateOne({password:userModel.password })
+      .then((result) => {
+       return res
+          .status(201)
+          .send(
+            `hi`
+          );
+          // `<button><a href=${process.env.ACTIVE_URL}>re</a></button>`
+      })
+      .catch((err) => {
+        res.status(400).json(err)
+      });
+  });
+};
+
+const updatePass = async (req, res) => {
+  const { password, _id } = req.body; 
+  const { token } = req.params;
+  console.log(_id);
+  const userId = await userModel.findOne({ _id });
+
+  if (token == userId) {
+    await userModel.findOneAndUpdate(
+      { _id },
+      { $set: { password } },
+      { new: true }
+    );
+    res.json("done");
+  } else {
+    return res.status(403).json("forbidden");
+  }
+}
 // LogIn function
 
 const logIn = (req, res) => {
@@ -61,16 +163,16 @@ const logIn = (req, res) => {
             id: result._id,
           };
           const token = jwt.sign(payload, SECRETKEY);
-          res.status(200).json({ result, token });
+          return res.status(200).json({ result, token });
         } else {
           res.status(400).json("invalid email or password");
         }
       } else {
-        res.status(404).json("not found");
+        return res.status(404).json("not found");
       }
     })
     .catch((err) => {
-      res.status(400).json(err);
+      return res.status(400).json(err);
     });
 };
 
@@ -98,4 +200,12 @@ const deleteUser = async (req, res) => {
     });
 };
 
-module.exports = { register, logIn, allUser, deleteUser };
+module.exports = {
+  register,
+  logIn,
+  allUser,
+  deleteUser,
+  activated,
+  forgetPass,
+  updatePass
+};
