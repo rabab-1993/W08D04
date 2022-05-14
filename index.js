@@ -4,7 +4,7 @@ dotenv.config();
 const morgan = require("morgan");
 const cors = require("cors");
 const passport = require("passport");
-const googleConfig = require("./passport")(passport)
+require("./passport")(passport)
 
 
 const app = express();
@@ -16,8 +16,8 @@ require("./db/index")
 app.use(express.json({limit: "30mb", extended: true}));
 app. use(express.urlencoded({limit: "30mb", extended: false}))
 app.use(cors());
-app.use(passport.initialize());
 app.use(morgan("dev"));
+app.use(passport.initialize());
 
 
 // import all routers

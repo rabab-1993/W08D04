@@ -1,12 +1,25 @@
 const postModel = require("../../db/model/post");
-const likeModel = require("../../db/model/likes")
+const likeModel = require("../../db/model/likes");
+const userModel = require("../../db/model/user");
+
+const cloudinary = require("cloudinary").v2;
+// cloudinary configuration
+cloudinary.config({
+  cloud_name: "dtj6j4tpa",
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
 
 // creat new post
-const newPost = (req, res) => {
+const newPost = async (req, res) => {
   const { user, desc, img } = req.body;
+  const cloude = await cloudinary.uploader.upload(img, {
+    folder: "social-img",
+  });
+
   const post = new postModel({
     desc,
-    img,
+    img: cloude.secure_url,
     user,
   });
 
@@ -23,9 +36,9 @@ const newPost = (req, res) => {
 // get all post
 
 const allPost = (req, res) => {
-  const {_id} = req.params
   postModel
     .find({ isDeleted: false })
+    .populate("likes")
     .then((result) => {
       res.status(200).json(result);
     })
@@ -39,7 +52,7 @@ const postedBy = async (req, res) => {
   const { user } = req.query;
 
   await postModel
-    .find({ user,isDeleted: false })
+    .find({ user, isDeleted: false })
     .then((result) => {
       res.status(200).json(result);
       console.log(user);
@@ -51,11 +64,11 @@ const postedBy = async (req, res) => {
 
 // update post function
 const updatePost = async (req, res) => {
-  const { desc, _id } = req.body;
+  const { desc, _id } = req.query;
   const idToken = req.saveToken.id;
-  const postedBy = await postModel.findOne({ _id });
+  const userId = await postModel.findOne({ _id });
 
-  if (idToken == postedBy.user) {
+  if (idToken == userId.user) {
     await postModel.findOneAndUpdate(
       { _id },
       { $set: { desc } },
@@ -69,20 +82,20 @@ const updatePost = async (req, res) => {
 
 // soft delete post function
 const deletePost = async (req, res) => {
-  const { isDeleted, _id } = req.query;
+  const { _id, adminId } = req.query;
   const tokenId = req.saveToken.id;
-  const postedBy = await postModel.findOne({ _id });
-  if (tokenId == postedBy.user) {
-    postModel.findById({ _id }).then(async (result) => {
-      if (result.isDeleted == true) {
-        return res.json({ massege: "this post already have been deleted" });
-      } else {
-        await postModel.findOneAndUpdate({ _id }, { $set: { isDeleted } }, { new: true });
-        return res.json({ massege: "deleted successfully" });
-      }
-    });
-  } else {
-    res.status(403).json({ massege: "forbidden" });
+  const postBy = await postModel.findById(_id);
+  const admin = await userModel.findById(adminId);
+
+  if (tokenId == postBy.user || admin.role == "61a82b332b8f8814ee629667") {
+    await postModel
+      .findByIdAndUpdate({ _id }, { $set: { isDeleted: true } }, { new: true })
+      .then(() => {
+        res.json({ massege: "deleted successfully" });
+      })
+      .catch((err) => {
+        res.status(403).json({ massege: "forbidden" });
+      });
   }
 };
 

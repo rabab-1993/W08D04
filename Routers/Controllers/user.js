@@ -15,7 +15,7 @@ const SALT = Number(process.env.SALT);
 
 // get all role function
 const allUser = async (req, res) => {
-  userModel
+await  userModel
     .find()
     .then((result) => {
       res.status(200).json(result);
@@ -33,7 +33,7 @@ const register = async (req, res) => {
     userName,
     email,
     password: savePass,
-    role
+    role,
   };
   const token = jwt.sign(data, activeKey, { expiresIn: "15m" });
 
@@ -68,7 +68,7 @@ const activated = (req, res) => {
         userName,
         email,
         password,
-        role
+        role,
       });
       creatUser
         .save()
@@ -88,11 +88,10 @@ const activated = (req, res) => {
   }
 };
 
-const forgetPass =  (req, res) => {
+const forgetPass = (req, res) => {
   const { email } = req.body;
 
-   userModel.findOne({ email }).then( ( user) => {
-    
+  userModel.findOne({ email }).then((user) => {
     if (!user) {
       return res.status(400).json("user with this email dosn't exists");
     }
@@ -114,23 +113,19 @@ const forgetPass =  (req, res) => {
         console.error(error);
       });
     userModel
-      .updateOne({password:userModel.password })
+      .updateOne({ password: userModel.password })
       .then((result) => {
-       return res
-          .status(201)
-          .send(
-            `hi`
-          );
-          // `<button><a href=${process.env.ACTIVE_URL}>re</a></button>`
+        return res.status(201).send(`hi`);
+        // `<button><a href=${process.env.ACTIVE_URL}>re</a></button>`
       })
       .catch((err) => {
-        res.status(400).json(err)
+        res.status(400).json(err);
       });
   });
 };
 
 const updatePass = async (req, res) => {
-  const { password, _id } = req.body; 
+  const { password, _id } = req.body;
   const { token } = req.params;
   console.log(_id);
   const userId = await userModel.findOne({ _id });
@@ -141,11 +136,11 @@ const updatePass = async (req, res) => {
       { $set: { password } },
       { new: true }
     );
-    res.json("done");
+    res.status(201).json("done");
   } else {
     return res.status(403).json("forbidden");
   }
-}
+};
 // LogIn function
 
 const logIn = (req, res) => {
@@ -181,19 +176,39 @@ const logIn = (req, res) => {
 const deleteUser = async (req, res) => {
   const { _id } = req.body;
 
-  userModel
-    .findById({ _id })
+  await userModel
+    .findByIdAndUpdate({ _id }, { $set: { isDeleted: true } }, { new: true })
     .then((result) => {
-      console.log(result);
-      if (result) {
-        userModel.deleteOne({ _id }, (err) => {
-          if (err) return handleError(err);
-        });
+      res.status(200).json(result);
+    })
+    .catch((err) => {
+      res.status(400).json(err);
+    });
+};
 
-        res.status(200).json({ massege: "user deleted successfully" });
-      } else {
-        return res.status(404).json("user not found");
-      }
+
+// undelete user function
+
+const undeleteUser = async (req, res) => {
+  const { _id } = req.body;
+
+  await userModel
+    .findByIdAndUpdate({ _id }, { $set: { isDeleted: false } }, { new: true })
+    .then((result) => {
+      res.status(200).json(result);
+    })
+    .catch((err) => {
+      res.status(400).json(err);
+    });
+};
+
+//   get user profile
+const profile = async (req, res) => {
+  const { _id } = req.query;
+  userModel
+    .findOne({ _id })
+    .then((result) => {
+      res.status(200).json(result);
     })
     .catch((err) => {
       res.status(400).json(err);
@@ -205,7 +220,9 @@ module.exports = {
   logIn,
   allUser,
   deleteUser,
+  undeleteUser,
   activated,
   forgetPass,
-  updatePass
+  updatePass,
+  profile,
 };

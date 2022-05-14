@@ -6,8 +6,8 @@ const postSchema = new mongoose.Schema({
    isDeleted: { type: Boolean, default: false },
    date: {type: Date, default: Date.now},
    user: { type: mongoose.Schema.Types.ObjectId, ref: "User"},
-   likes: { type: mongoose.Schema.Types.ObjectId, ref: "Likes"},
-   comment: { type: mongoose.Schema.Types.ObjectId, ref: "Comment"},
+   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Likes"}],
+   comment: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment"}],
 })
 
 

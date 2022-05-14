@@ -1,5 +1,5 @@
 const express = require("express");
-const { register, logIn, allUser, deleteUser, activated, forgetPass, updatePass } = require("../Controllers/user");
+const { register, logIn, allUser, deleteUser, undeleteUser, activated, forgetPass, updatePass, profile } = require("../Controllers/user");
 const authentication = require("../midleware/auth");
 const authorization = require("../midleware/outh");
 const passport = require("passport");
@@ -11,14 +11,15 @@ userRouter.get("/activated/:token", activated);
 userRouter.post("/login", logIn);
 userRouter.put("/forget", forgetPass);
 userRouter.get("/reset-pass/:res-tok", updatePass);
+userRouter.get("/profile", profile);
+
 // log with Google
 userRouter.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile"] }, googlePass)
-);
+  "/user/auth/google",
+  passport.authenticate("google", { scope: ["profile"] }));
 
 userRouter.get(
-  "/auth/google/callback",
+  "/user/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   function (req, res) {
     // Successful authentication, redirect home.
@@ -27,7 +28,8 @@ userRouter.get(
 );
 
 // just for admin
-userRouter.get("/", authentication, authorization, allUser);
-userRouter.delete("/", authentication, authorization, deleteUser);
+userRouter.get("/users", authentication, authorization, allUser);
+userRouter.delete("/delete-user", authentication, authorization, deleteUser);
+userRouter.put("/undelete-user", authentication, authorization, undeleteUser);
 
 module.exports = userRouter;
