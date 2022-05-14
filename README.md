@@ -20,3 +20,7 @@
 - mongoose
 - bcrypt
 - jsonwebtoken
+
+
+## ER diagram :
+![Er drawio](https://user-images.githubusercontent.com/92247904/145283592-a3ca26f0-0393-4eed-9229-e19ba0b4cfc6.png)
