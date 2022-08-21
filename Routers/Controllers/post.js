@@ -1,5 +1,6 @@
+const multer = require("multer");
+const upload = multer();
 const postModel = require("../../db/model/post");
-const likeModel = require("../../db/model/likes");
 const userModel = require("../../db/model/user");
 
 const cloudinary = require("cloudinary").v2;
@@ -12,33 +13,56 @@ cloudinary.config({
 
 // creat new post
 const newPost = async (req, res) => {
-  const { user, desc, img } = req.body;
-  const cloude = await cloudinary.uploader.upload(img, {
-    folder: "social-img",
-  });
+  try {
+    const { user, desc, imags } = req.body;
+    let imgs = [];
 
-  const post = new postModel({
-    desc,
-    img: cloude.secure_url,
-    user,
-  });
+    for (const image of imags) {
+      const cloud = await cloudinary.uploader.upload(image, {
+        folder: "social-img",
+      });
 
-  post
-    .save()
-    .then((result) => {
-      res.status(201).json(result);
-    })
-    .catch((err) => {
-      res.status(400).json(err);
+      imgs.push(cloud.secure_url);
+    }
+    const post = new postModel({
+      desc,
+      img: imgs,
+      user,
     });
-};
 
+    post.save().then((result) => {
+      res.status(201).json(result);
+    });
+  } catch (error) {
+    res.status(400).json(error);
+  }
+
+  // console.log(imags);
+  //  const cloud = await cloudinary.uploader.upload(imags, {
+  //     folder: "social-img",
+  //   }, function(error, result) {console.log(result, error)})
+
+  // const post = new postModel({
+  //   desc,
+  //   img: imags,
+  //   user,
+  // });
+
+  // post
+  //   .save()
+  //   .then((result) => {
+  //     res.status(201).json(result);
+  //   })
+  //   .catch((err) => {
+  //     res.status(400).json(err);
+  //   });
+};
 // get all post
 
 const allPost = (req, res) => {
   postModel
     .find({ isDeleted: false })
-    .populate("likes")
+    .populate("likes comments user")
     .then((result) => {
       res.status(200).json(result);
     })
@@ -47,15 +71,15 @@ const allPost = (req, res) => {
     });
 };
 
-// get post by id
+// get user is post
 const postedBy = async (req, res) => {
-  const { user } = req.query;
+  const { userId, postId } = req.query;
 
   await postModel
-    .find({ user, isDeleted: false })
+    .find({ $or: [{ _id: postId }, { user: userId }], isDeleted: false })
+    .populate("likes user")
     .then((result) => {
       res.status(200).json(result);
-      console.log(user);
     })
     .catch((err) => {
       res.status(400).json(err);
@@ -64,20 +88,16 @@ const postedBy = async (req, res) => {
 
 // update post function
 const updatePost = async (req, res) => {
-  const { desc, _id } = req.query;
-  const idToken = req.saveToken.id;
-  const userId = await postModel.findOne({ _id });
+  const { desc, _id } = req.body;
 
-  if (idToken == userId.user) {
-    await postModel.findOneAndUpdate(
-      { _id },
-      { $set: { desc } },
-      { new: true }
-    );
-    res.json("done");
-  } else {
-    return res.status(403).json("forbidden");
-  }
+  await postModel
+    .findByIdAndUpdate({ _id }, { $set: { desc } }, { new: true })
+    .then((result) => {
+      res.status(200).json({ massege: "updated successfully", result });
+    })
+    .catch((err) => {
+      res.status(400).json(err);
+    });
 };
 
 // soft delete post function

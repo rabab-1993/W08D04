@@ -4,7 +4,7 @@ const {newComment, updateComment, deleteComment, allComment} = require('../Contr
 const authentication = require("../midleware/auth");
 
 
-commentRouter.get('/all', authentication, allComment)
+commentRouter.get('/', authentication, allComment)
 commentRouter.post('/add', authentication, newComment)
 commentRouter.put('/', authentication, updateComment)
 commentRouter.delete('/', authentication , deleteComment)

@@ -13,9 +13,17 @@ const activeKey = process.env.ACTIVE_KEY;
 const bcrypt = require("bcrypt");
 const SALT = Number(process.env.SALT);
 
+const cloudinary = require("cloudinary").v2;
+// cloudinary configuration
+cloudinary.config({
+  cloud_name: "dtj6j4tpa",
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
 // get all role function
 const allUser = async (req, res) => {
-await  userModel
+  await userModel
     .find()
     .then((result) => {
       res.status(200).json(result);
@@ -127,7 +135,7 @@ const forgetPass = (req, res) => {
 const updatePass = async (req, res) => {
   const { password, _id } = req.body;
   const { token } = req.params;
-  console.log(_id);
+
   const userId = await userModel.findOne({ _id });
 
   if (token == userId) {
@@ -186,7 +194,6 @@ const deleteUser = async (req, res) => {
     });
 };
 
-
 // undelete user function
 
 const undeleteUser = async (req, res) => {
@@ -204,15 +211,36 @@ const undeleteUser = async (req, res) => {
 
 //   get user profile
 const profile = async (req, res) => {
-  const { _id } = req.query;
-  userModel
-    .findOne({ _id })
+  const { userName, _id } = req.query;
+
+  await userModel
+    .find({ $or: [{ userName }, { _id }] })
     .then((result) => {
       res.status(200).json(result);
     })
     .catch((err) => {
       res.status(400).json(err);
     });
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { userName, avatar, _id } = req.body;
+    const cloude = await cloudinary.uploader.upload(avatar, {
+      folder: "social-profile",
+    });
+    await userModel
+      .findByIdAndUpdate(
+        { _id },
+        { $set: { userName , avatar: cloude.secure_url} },
+        { new: true }
+      )
+      .then((result) => {
+        res.status(200).json(result);
+      });
+  } catch (error) {
+    res.status(400).json(error);
+  }
 };
 
 module.exports = {
@@ -225,4 +253,5 @@ module.exports = {
   forgetPass,
   updatePass,
   profile,
+  updateProfile,
 };

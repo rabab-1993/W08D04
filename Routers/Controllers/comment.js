@@ -1,5 +1,5 @@
 const commentModel = require("../../db/model/comment");
-const roleModel = require('../../db/model/role')
+const postModel = require("../../db/model/post");
 
 // creat new comment
 const newComment = (req, res) => {
@@ -12,7 +12,10 @@ const newComment = (req, res) => {
 
   comments
     .save()
-    .then((result) => {
+    .then(async (result) => {
+      await postModel.findByIdAndUpdate(postId, {
+        $push: { comments: result },
+      });
       res.status(201).json(result);
     })
     .catch((err) => {
@@ -20,11 +23,13 @@ const newComment = (req, res) => {
     });
 };
 
-// get all comment
+// get all comment for post
 
 const allComment = (req, res) => {
+  const { postId } = req.query;
   commentModel
-    .find()
+    .find({ postId: postId })
+    .populate("userId")
     .then((result) => {
       res.status(200).json(result);
     })
@@ -36,39 +41,29 @@ const allComment = (req, res) => {
 // update comment function
 const updateComment = async (req, res) => {
   const { comment, _id } = req.body;
-  const tokenId = req.saveToken.id;
-  const commentedBy = await commentModel.findOne({ _id });
-  if (tokenId == commentedBy.userId) {
+ 
     await commentModel
-      .findOneAndUpdate({ _id }, { $set: { comment } })
-      .then(() => {
-        res.status(200).json({ massege: "updated successfully" });
+      .findByIdAndUpdate({ _id }, { $set: { comment } })
+      .then((result) => {
+        res.status(200).json({ massege: "updated successfully", result });
       })
       .catch((err) => {
         res.status(400).json(err);
       });
-  } else {
-    res.status(403).json("forbidden");
-  }
 };
 
 // delete comment function
 const deleteComment = async (req, res) => {
-  const { _id } = req.body;
-  const tokenId = req.saveToken.id;
-  const commentedBy = await commentModel.findOne({ _id });
-  if (tokenId == commentedBy.userId) {
-    await commentModel
-      .findByIdAndDelete(_id)
-      .then(() => {
-        res.status(200).json({ massege: "deleted successfully" });
-      })
-      .catch((err) => {
-        res.status(400).json(err);
-      });
-  } else {
-    res.status(403).json("forbidden");
-  }
+  const { _id } = req.query;
+  
+  await commentModel
+    .findByIdAndDelete(_id)
+    .then(() => {
+      res.status(200).json({ massege: "deleted successfully" });
+    })
+    .catch((err) => {
+      res.status(400).json(err);
+    });
 };
 
 module.exports = { newComment, updateComment, deleteComment, allComment };
