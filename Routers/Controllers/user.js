@@ -225,14 +225,19 @@ const profile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { userName, avatar, _id } = req.body;
-    const cloude = await cloudinary.uploader.upload(avatar, {
-      folder: "social-profile",
-    });
+    const { _id , userName, avatar} = req.body;
+    let img;
+    if (avatar) {
+      
+      const cloude = await cloudinary.uploader.upload(avatar, {
+        folder: "social-profile",
+      });
+      img = cloude.secure_url
+    }
     await userModel
       .findByIdAndUpdate(
         { _id },
-        { $set: { userName , avatar: cloude.secure_url} },
+        { $set: { userName , avatar: img} },
         { new: true }
       )
       .then((result) => {
