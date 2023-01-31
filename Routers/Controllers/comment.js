@@ -29,7 +29,7 @@ const allComment = (req, res) => {
   const { postId } = req.query;
   commentModel
     .find({ postId: postId })
-    // .populate("userId")
+    .populate("userId")
     .then((result) => {
       res.status(200).json(result);
     })
